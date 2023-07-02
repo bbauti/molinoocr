@@ -3,7 +3,10 @@ import { writeFile } from 'fs/promises';
 // import { createWorker } from 'tesseract.js';
 import { convert } from 'pdf-img-convert';
 import { createWorker } from 'tesseract.js';
-import {main} from 'magica'
+import waifu2x from "waifu2x"
+import Jimp from "jimp"
+import sharp from 'sharp'
+import path from 'path';
 
 const convertImage = (imageSrc) => {
     const data = atob(imageSrc.split(',')[1])
@@ -13,48 +16,72 @@ const convertImage = (imageSrc) => {
     return new Uint8Array(data);
 }
 
+let ocrtext = []
+
 async function logTesseract(file, name) {
     const worker = await createWorker();
     await worker.loadLanguage('spa');
     await worker.initialize('spa');
-    const { data: { imageGrey, imageBinary } } = await worker.recognize(file, {rotateAuto: true}, {imageGrey: true, imageBinary: true});
+    const { data: { imageBinary } } = await worker.recognize(file, {rotateAuto: true}, {imageBinary: true});
 
-    console.log('Guardando foto');
+    await writeFile(`./images/${name}-binary.png`, convertImage(imageBinary))
 
-    await writeFile(`./images/${name}-grey.png`, await convertImage(imageGrey)).then(console.log("guardado"))
-    await writeFile(`./images/${name}-binary.png`, await convertImage(imageBinary)).then(console.log("guardado"))
+    const { data: { text } } = await worker.recognize(`./images/${name}-binary.png`)
 
     await worker.terminate();
+
+    let textocr = text.replace(/\n/g, ' ')
+
+    ocrtext.push(textocr)
 }
 
-async function upscale(file, name) {
-
-    const result = await main({
-        debug: true,
-        command: `convert ${file} -scale 50% ${file}-upscaled.png`,
-        inputFiles: [ file ]
-    })
-    result.outputFiles.forEach(async f => await writeFile(`./images/${f.name}`, f.content))
-}
 
 export const actions = {
 	submit: async ({ request }) => {
+        console.log('inicio submit')
+        ocrtext = []
         const data = await request.formData()
         for (const [key, value] of data.entries()) {
             let file = Buffer.from(await value.arrayBuffer(), 'base64')
-            await writeFile(`./pdf/${value.name}`, await file)
-            console.log("pdf guardado")
-            let image = convert(`./pdf/${value.name}`,{
-                page_numbers: [1],
+            const ext = path.extname(value.name).slice(1)
+            if (ext === 'pdf') {
+                 await writeFile(`./pdf/${value.name}`, await file)
+                 let image = convert(`./pdf/${value.name}`,{
+                    width: 2000,
+                    height: 2000,
+                    page_numbers: [1],
+                })
+                await writeFile(`./images/${value.name}.png`, await image)
+            } else {
+                 await writeFile(`./images/${value.name}.png`, await file)
+            }
+            const imageedit = await sharp(`./images/${value.name}.png`).sharpen({ sigma: 2 }).gamma(3).toBuffer();
+            await writeFile(`./images-edited/${value.name}-sharp.png`, await imageedit)
+            await waifu2x.upscaleImage(`./images-edited/${value.name}-sharp.png`, `./images-upscaled/${value.name}.png`, {scale: 2, upscaler: "real-esrgan"})
+            Jimp.read(`./images-upscaled/${value.name}.png`)
+            .then((upscaled) => {
+                return upscaled
+                .quality(100) 
+                .greyscale() 
+                .write(`./images-edited/${value.name}.png`); // save
             })
-            // width: 4000,
-            // height: 4000,
-            await writeFile(`./images/${value.name}.png`, await image)
-            console.log("foto guardada")
-            upscale(`./images/${value.name}.png`, value.name)
-            // logTesseract(`./images/${value.name}.png`, value.name)
-            console.log("texto")
+            .catch((err) => {
+                console.error(err);
+            });
+            await logTesseract(`./images-edited/${value.name}.png`, value.name)
         }
-        return { sucess: true };
+        console.log('fin submit')
+        return { text: ocrtext, status: 'done' };
+    },
+    chat: async ({ request }) => {
+        const data = await request.formData();
+        for (let field of data) {
+        const [key, value] = field;
+            data[key] = value;
+        }
+        let query = `Sos un asistente respetuoso, lo siguiente que te voy a mandar va a ser un CV, es decir, un curriculum vitae, donde voy a hacerte preguntas sobre el o los curriculums compartidos, y vas a tener que responderme como si fueras un asistente resposable, y confiable. Si son varios Curriculums, van a tener un separador, que es:  <| TERMINACION DE CV |> , al ver que hay eso, tenes que interpretar que termino un cv, y arranca otro. Voy a mandarte los cvs luego de un 'INICIO |', y, al mandarte '| FINAL', no habra mas cvs. Lo que tenes que leer es: INICIO | ${data.text} | FINAL. Ahora, viene la pregunta del usuario que va a estar luego de un ' PREGUNTA | ', que debes responder con la informacion de los cvs que te envie. Al responder, no respondas con nada que yo te haya dicho, si no, como si solamnte hubieras hablado con el usuario:  PREGUNTA | ${data.input}`
+        console.log(query)
+        let answer='god'
+        return { answer: answer };
     },
 };
