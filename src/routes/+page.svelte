@@ -9,12 +9,15 @@
 	import { page } from '$app/stores';
 
 	import { enhance } from '$app/forms';
-	import { useCompletion } from 'ai/svelte';
 	import { SyncLoader } from 'svelte-loading-spinners';
 	import { blur } from 'svelte/transition';
 	import { fade } from 'svelte/transition';
 	import { scale } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
+
+	import showdown from 'showdown';
+
+	const converter = new showdown.Converter();
 
 	registerPlugin(
 		FilePondPluginImageExifOrientation,
@@ -23,22 +26,26 @@
 	);
 
 	export let pond;
+	export let form;
 
 	let ocr;
-	let str;
 	let status;
 	let loading;
 
-	export let form;
-
-	$: answer = form?.answer;
+	let uploadstatus;
 
 	function startLoad() {
+		loading = true;
+		uploadstatus = 'uploading';
+	}
+
+	function startAnswerLoad() {
 		loading = true;
 	}
 
 	function stopLoad() {
 		loading = false;
+		uploadstatus = 'done';
 	}
 
 	let visible;
@@ -46,8 +53,7 @@
 	$: visible = false;
 
 	let text = [];
-
-	$: ocr = text.join(' <| TERMINACION DE CV |> ');
+	$: text = [];
 
 	function res(response) {
 		const parsed = JSON.parse(response);
@@ -55,8 +61,11 @@
 		const statuspos = data[0].status;
 		const textpos = data[0].text;
 		text.push(data[textpos]);
+		ocr = text.join(' <| TERMINACION DE CV |> ');
 		status = data[statuspos];
 	}
+
+	$: ocr = text.join(' <| TERMINACION DE CV |> ');
 
 	let opc = {
 		process: {
@@ -70,6 +79,11 @@
 
 	function hideLoad() {
 		loaded = true;
+	}
+	$: answer = form?.answer;
+
+	$: if (answer) {
+		stopLoad();
 	}
 </script>
 
@@ -111,18 +125,16 @@
 			labelButtonProcessItem="Subir"
 		/>
 	</section>
-	{#if loading}
-		<section id="loading" transition:blur={{ delay: 250, duration: 300, easing: quintOut }}>
-			<SyncLoader size="60" color="#d4d4d4" unit="px" duration="1s" />
-		</section>
-	{/if}
 
-	{#if status === 'done'}
-		<section class="form userinput">
+	{#if uploadstatus === 'done'}
+		<section
+			class="form userinput"
+			transition:blur={{ delay: 250, duration: 300, easing: quintOut }}
+		>
 			<form
-				transition:blur={{ delay: 250, duration: 300, easing: quintOut }}
 				method="POST"
 				action="?/chat"
+				on:submit={startAnswerLoad}
 				use:enhance
 				enctype="multipart/form-data"
 			>
@@ -132,6 +144,16 @@
 					>submit<iconify-icon icon="mingcute:send-fill" style="font-size: 1.2rem;" /></button
 				>
 			</form>
+		</section>
+		{#if answer}
+			<section transition:blur={{ delay: 250, duration: 300, easing: quintOut }}>
+				<div class="answer">{@html converter.makeHtml(answer)}</div>
+			</section>
+		{/if}
+	{/if}
+	{#if loading}
+		<section id="loading" transition:blur={{ delay: 250, duration: 300, easing: quintOut }}>
+			<SyncLoader size="60" color="#d4d4d4" unit="px" duration="1s" />
 		</section>
 	{/if}
 </main>

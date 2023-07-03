@@ -8,6 +8,14 @@ import Jimp from "jimp"
 import sharp from 'sharp'
 import path from 'path';
 
+import { OPENAI_API_KEY } from '$env/static/private';
+
+import { ChatGPTAPI } from 'chatgpt'
+
+const api = new ChatGPTAPI({
+    apiKey: OPENAI_API_KEY
+})
+
 const convertImage = (imageSrc) => {
     const data = atob(imageSrc.split(',')[1])
           .split('')
@@ -33,10 +41,8 @@ async function logTesseract(file, name) {
     return textocr
 }
 
-
 export const actions = {
 	submit: async ({ request }) => {
-        console.log('inicio submit')
         const data = await request.formData()
         let res
         for (const [key, value] of data.entries()) {
@@ -70,7 +76,6 @@ export const actions = {
                 res = await logTesseract(`./images-edited/${value.name}.png`, value.name)
             }
         }
-        console.log('fin submit')
         return { text: res, status: 'done' };
     },
     chat: async ({ request }) => {
@@ -78,12 +83,9 @@ export const actions = {
         for (let field of data) {
         const [key, value] = field;
             data[key] = value;
-            console.log(value)
         }
-        console.log(data)
-        let query = `Sos un asistente respetuoso, lo siguiente que te voy a mandar va a ser un CV, es decir, un curriculum vitae, donde voy a hacerte preguntas sobre el o los curriculums compartidos, y vas a tener que responderme como si fueras un asistente resposable, y confiable. Si son varios Curriculums, van a tener un separador, que es:  <| TERMINACION DE CV |> , al ver que hay eso, tenes que interpretar que termino un cv, y arranca otro. Voy a mandarte los cvs luego de un 'INICIO |', y, al mandarte '| FINAL', no habra mas cvs. Lo que tenes que leer es: INICIO | ${data.text} | FINAL. Ahora, viene la pregunta del usuario que va a estar luego de un ' PREGUNTA | ', que debes responder con la informacion de los cvs que te envie. Al responder, no respondas con nada que yo te haya dicho, si no, como si solamnte hubieras hablado con el usuario:  PREGUNTA | ${data.input}`
-        console.log(query)
-        let answer='god'
-        return { answer: answer };
+        let query = `Sos un asistente respetuoso, lo siguiente que te voy a mandar va a ser un CV, es decir, un curriculum vitae, donde voy a hacerte preguntas sobre el o los curriculums compartidos, y vas a tener que responderme como si fueras un asistente resposable, y confiable. Si son varios Curriculums, van a tener un separador, que es:  " <| TERMINACION DE CV |> " , al ver que hay eso, tenes que interpretar que termino un cv, y arranca otro. Voy a mandarte los cvs luego de un 'INICIO |', y, al mandarte '| FINAL', no habra mas cvs. Los curriculum que tenes que que leer son: INICIO | ${data.text} | FINAL. Ahora, viene la pregunta del usuario que va a estar luego de un ' PREGUNTA | ', que debes responder con la informacion de los cvs que te envie. Al responder, no respondas con nada que yo te haya dicho, si no, como si solamnte hubieras hablado con el usuario. Al responder, debes hacerlo usando Markdown, y que quede de una manera atractiva, usando sus espaciados, titulos, etc. Al responder, siempre debes hacerlo en español, y no simplemente dar la respuesta. Al responder, tenes que hacer la referencia sobre el nombre de la persona sobre la que es el curriculum, no referirte en si al, por ejemplo, 'primer' curriculum:  PREGUNTA | ${data.input}`
+        let res = await api.sendMessage(query)
+        return { answer: res.text };
     },
 };

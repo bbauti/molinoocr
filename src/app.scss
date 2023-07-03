@@ -1,8 +1,11 @@
 /* Write your global styles here, in SCSS syntax. Variables and mixins from the src/variables.scss file are available here without importing */
 
+@import "@fontsource-variable/open-sans";
+
 body {
   margin: 0;
   background-color: #0e0e0e;
+  font-family: "Open Sans Variable", sans-serif;
 }
 
 main {
@@ -11,10 +14,6 @@ main {
 
 section {
   max-width: 90vw;
-}
-
-.upload {
-  margin: 0 auto;
 }
 
 #loading {
@@ -68,7 +67,21 @@ button[type="submit"] {
   justify-content: center;
   border-radius: 10px;
   border: 1px solid rgb(59 59 59);
+}
+
+section {
   margin: 0 auto;
+}
+
+.answer {
+  display: flex;
+  flex-direction: column;
+  background: #161616;
+  color: #f2f2f2;
+  padding: 1rem;
+  margin-top: 1rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
 }
 
 @media screen and (min-width: 600px) {
