@@ -43,13 +43,16 @@ async function logTesseract(file, name) {
 
 export const actions = {
 	submit: async ({ request }) => {
+        console.log("iniciar")
         const data = await request.formData()
         let res
         for (const [key, value] of data.entries()) {
             if (value instanceof File) {
+                console.log("iniciar arch")
                 let file = Buffer.from(await value.arrayBuffer(), 'base64')
                 const ext = path.extname(value.name).slice(1)
                 if (ext === 'pdf') {
+                    console.log("pdf")
                     await writeFile(`./pdf/${value.name}`, await file)
                     let image = convert(`./pdf/${value.name}`,{
                         width: 2000,
@@ -57,12 +60,17 @@ export const actions = {
                         page_numbers: [1],
                     })
                     await writeFile(`./images/${value.name}.png`, await image)
+                    console.log("guardado")
                 } else {
+                    console.log("png")
                     await writeFile(`./images/${value.name}.png`, await file)
+                    console.log("guardado")
                 }
                 const imageedit = await sharp(`./images/${value.name}.png`).sharpen({ sigma: 2 }).gamma(3).toBuffer();
                 await writeFile(`./images-edited/${value.name}-sharp.png`, await imageedit)
+                console.log("sharp guardado")
                 await waifu2x.upscaleImage(`./images-edited/${value.name}-sharp.png`, `./images-upscaled/${value.name}.png`, {scale: 2, upscaler: "real-esrgan"})
+                console.log("upscaled")
                 Jimp.read(`./images-upscaled/${value.name}.png`)
                 .then((upscaled) => {
                     return upscaled
@@ -73,7 +81,10 @@ export const actions = {
                 .catch((err) => {
                     console.error(err);
                 });
+                console.log("edicion")
+                console.log("ocr")
                 res = await logTesseract(`./images-edited/${value.name}.png`, value.name)
+                console.log("terminado")
             }
         }
         return { text: res, status: 'done' };
@@ -85,7 +96,18 @@ export const actions = {
             data[key] = value;
         }
         let query = `Sos un asistente respetuoso, lo siguiente que te voy a mandar va a ser un CV, es decir, un curriculum vitae, donde voy a hacerte preguntas sobre el o los curriculums compartidos, y vas a tener que responderme como si fueras un asistente resposable, y confiable. Si son varios Curriculums, van a tener un separador, que es:  " <| TERMINACION DE CV |> " , al ver que hay eso, tenes que interpretar que termino un cv, y arranca otro. Voy a mandarte los cvs luego de un 'INICIO |', y, al mandarte '| FINAL', no habra mas cvs. Los curriculum que tenes que que leer son: INICIO | ${data.text} | FINAL. Ahora, viene la pregunta del usuario que va a estar luego de un ' PREGUNTA | ', que debes responder con la informacion de los cvs que te envie. Al responder, no respondas con nada que yo te haya dicho, si no, como si solamnte hubieras hablado con el usuario. Al responder, debes hacerlo usando Markdown, y que quede de una manera atractiva, usando sus espaciados, titulos, etc. Al responder, siempre debes hacerlo en español, y no simplemente dar la respuesta. Al responder, tenes que hacer la referencia sobre el nombre de la persona sobre la que es el curriculum, no referirte en si al, por ejemplo, 'primer' curriculum:  PREGUNTA | ${data.input}`
-        let res = await api.sendMessage(query)
-        return { answer: res.text };
+        console.log(query)
+        let res
+        if (data.id) {
+            console.log("tiene id")
+            console.log(data.id)
+            res = await api.sendMessage(query, {
+                parentMessageId: data.id
+            })
+        } else {
+            console.log("no tiene id")
+            res = await api.sendMessage(query)
+        }
+        return { answer: res.text, userinput: data.input, id: res.id  };
     },
 };

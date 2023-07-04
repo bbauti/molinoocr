@@ -81,6 +81,8 @@
 		loaded = true;
 	}
 	$: answer = form?.answer;
+	$: userinput = form?.userinput
+	$: id = form?.id
 
 	$: if (answer) {
 		stopLoad();
@@ -127,6 +129,11 @@
 	</section>
 
 	{#if uploadstatus === 'done'}
+		{#if userinput}
+			<section transition:blur={{ delay: 250, duration: 300, easing: quintOut }}>
+				<div class="answer">{id}: {userinput}</div>
+			</section>
+		{/if}
 		<section
 			class="form userinput"
 			transition:blur={{ delay: 250, duration: 300, easing: quintOut }}
@@ -138,6 +145,9 @@
 				use:enhance
 				enctype="multipart/form-data"
 			>
+				{#if id}
+					<input type="hidden" name="id" value={id} />
+				{/if}
 				<input type="hidden" name="text" value={ocr} />
 				<input type="text" name="input" placeholder="Ingresa tu pregunta" />
 				<button type="submit"
