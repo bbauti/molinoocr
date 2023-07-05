@@ -4,7 +4,7 @@
 
 body {
   margin: 0;
-  background-color: #0e0e0e;
+  background-color: $background;
   font-family: "Open Sans Variable", sans-serif;
 }
 
@@ -37,7 +37,7 @@ input[type="text"] {
   border: 1px solid rgba(139, 139, 139, 0.16);
   transition: all 0.2s ease-in-out;
   background-color: rgba(14, 14, 14, 0.81);
-  color: #d4d4d4;
+  color: $text-color;
   width: 40vw;
 }
 
@@ -54,18 +54,19 @@ button[type="submit"] {
   outline: none;
   border-radius: 10px;
   border: 1px solid rgba(139, 139, 139, 0.16);
-  background-color: #369763;
-  color: #d4d4d4;
+  background-color: $accent;
+  color: $text-color;
 }
 
 .userinput {
   box-sizing: border-box;
-  background-color: rgb(23 23 23);
+  background-color: $files-background;
   display: flex;
   flex-direction: row;
   padding: 0.5rem;
   justify-content: center;
-  border-radius: 10px;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
   border: 1px solid rgb(59 59 59);
 }
 
@@ -76,12 +77,44 @@ section {
 .answer {
   display: flex;
   flex-direction: column;
-  background: #161616;
-  color: #f2f2f2;
+  background: $answer-background;
+  color: $primary-text-color;
   padding: 1rem;
   margin-top: 1rem;
-  border-radius: 10px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
   font-size: 0.9rem;
+}
+
+.user {
+  margin: 1rem 0.5rem 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  border-top-right-radius: unset;
+  background-color: $accent;
+  width: fit-content;
+  margin-left: auto;
+}
+
+.bot {
+  margin: 0.5rem 0.5rem 1rem 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  border-top-left-radius: unset;
+  background-color: $bot;
+  width: fit-content;
+}
+
+.botsummary {
+  color: #b3b3b3;
+}
+
+details[open] > .botsummary {
+  color: #5f5f5f;
+}
+
+details {
+  cursor: pointer;
 }
 
 @media screen and (min-width: 600px) {

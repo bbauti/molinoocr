@@ -80,13 +80,48 @@
 	function hideLoad() {
 		loaded = true;
 	}
+
 	$: answer = form?.answer;
+
+	let conversation = []
+
+	let test = {
+		"user": "Hola!",
+		"bot": "Hola! en que te puedo ayudar?"
+	}
+
+	conversation.push(test)
+	conversation.push(test)
+	conversation.push(test)
+
+	console.log(conversation)
+
 	$: userinput = form?.userinput
 	$: id = form?.id
 
+	function addChat(bot, user) {
+		let chat = {
+			"user": user,
+			"bot": bot
+		}
+		conversation.push(chat)
+	}
+
 	$: if (answer) {
 		stopLoad();
+		addChat(answer, userinput)
 	}
+
+	$: addChat(form?.answer, form?.userinput)
+
+	// $: addChat(answer, userinput)
+
+	function testconversation() {
+		console.log(conversation)
+	}
+
+	// uploadstatus = "done"
+
 </script>
 
 <main>
@@ -129,11 +164,25 @@
 	</section>
 
 	{#if uploadstatus === 'done'}
-		{#if userinput}
-			<section transition:blur={{ delay: 250, duration: 300, easing: quintOut }}>
-				<div class="answer">{id}: {userinput}</div>
+			<section id="user-input" transition:blur={{ delay: 250, duration: 300, easing: quintOut }}>
+				<div class="answer">
+					{#each conversation as chat, index}
+						<div class="user">
+							{chat.user}
+						</div>
+						<div class="bot">
+							{#if index === conversation.length - 1}
+								{chat.bot}
+							{:else}
+							<details>
+								<summary class="botsummary">{chat.bot.slice(0,10)+"..."}</summary>
+								{chat.bot}
+							</details>
+							{/if}
+						</div>
+					{/each}
+				</div>
 			</section>
-		{/if}
 		<section
 			class="form userinput"
 			transition:blur={{ delay: 250, duration: 300, easing: quintOut }}
@@ -151,15 +200,15 @@
 				<input type="hidden" name="text" value={ocr} />
 				<input type="text" name="input" placeholder="Ingresa tu pregunta" />
 				<button type="submit"
-					>submit<iconify-icon icon="mingcute:send-fill" style="font-size: 1.2rem;" /></button
+					>Enviar<iconify-icon icon="mingcute:send-fill" style="font-size: 1.2rem;" /></button
 				>
 			</form>
 		</section>
-		{#if answer}
+		<!-- {#if answer}
 			<section transition:blur={{ delay: 250, duration: 300, easing: quintOut }}>
 				<div class="answer">{@html converter.makeHtml(answer)}</div>
 			</section>
-		{/if}
+		{/if} -->
 	{/if}
 	{#if loading}
 		<section id="loading" transition:blur={{ delay: 250, duration: 300, easing: quintOut }}>
