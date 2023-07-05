@@ -99,17 +99,16 @@ export const actions = {
         let query = `Sos un asistente respetuoso, lo siguiente que te voy a mandar va a ser un CV, es decir, un curriculum vitae, donde voy a hacerte preguntas sobre el o los curriculums compartidos, y vas a tener que responderme como si fueras un asistente resposable, y confiable. Si son varios Curriculums, van a tener un separador, que es:  " <| TERMINACION DE CV |> " , al ver que hay eso, tenes que interpretar que termino un cv, y arranca otro. Voy a mandarte los cvs luego de un 'INICIO |', y, al mandarte '| FINAL', no habra mas cvs. Los curriculum que tenes que que leer son: INICIO | ${data.text} | FINAL. Ahora, viene la pregunta del usuario que va a estar luego de un ' PREGUNTA | ', que debes responder con la informacion de los cvs que te envie. Al responder, no respondas con nada que yo te haya dicho, si no, como si solamnte hubieras hablado con el usuario. Al responder, debes hacerlo usando Markdown, y que quede de una manera atractiva, usando sus espaciados, titulos, etc. Al responder, siempre debes hacerlo en español, y no simplemente dar la respuesta. Al responder, tenes que hacer la referencia sobre el nombre de la persona sobre la que es el curriculum, no referirte en si al, por ejemplo, 'primer' curriculum:  PREGUNTA | ${data.input}`
         console.log(query)
         let res
-        // if (data.id) {
-        //     console.log("tiene id")
-        //     console.log(data.id)
-        //     res = await api.sendMessage(query, {
-        //         parentMessageId: data.id
-        //     })
-        // } else {
-        //     console.log("no tiene id")
-        //     res = await api.sendMessage(query)
-        // }
-        res = "Hola! es una prueba."
+        if (data.id) {
+            console.log("tiene id")
+            console.log(data.id)
+            res = await api.sendMessage(query, {
+                parentMessageId: data.id
+            })
+        } else {
+            console.log("no tiene id")
+            res = await api.sendMessage(query)
+        }
         console.log(res)
         return { answer: res.text, userinput: data.input, id: res.id  };
     },

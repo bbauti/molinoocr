@@ -105,14 +105,14 @@
 			"bot": bot
 		}
 		conversation.push(chat)
+		conversation = conversation
 	}
 
-	$: if (answer) {
+	$: if (form?.answer !== undefined) {
 		stopLoad();
 		addChat(answer, userinput)
+		console.log(conversation)
 	}
-
-	$: addChat(form?.answer, form?.userinput)
 
 	// $: addChat(answer, userinput)
 
