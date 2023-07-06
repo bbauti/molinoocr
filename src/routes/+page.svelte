@@ -85,16 +85,16 @@
 
 	let conversation = []
 
-	let test = {
-		"user": "Hola!",
-		"bot": "Hola! en que te puedo ayudar?"
-	}
+	// let test = {
+	// 	"user": "Hola!",
+	// 	"bot": "Hola! en que te puedo ayudar?"
+	// }
 
-	conversation.push(test)
-	conversation.push(test)
-	conversation.push(test)
+	// conversation.push(test)
+	// conversation.push(test)
+	// conversation.push(test)
 
-	console.log(conversation)
+	// console.log(conversation)
 
 	$: userinput = form?.userinput
 	$: id = form?.id
@@ -116,11 +116,40 @@
 
 	// $: addChat(answer, userinput)
 
-	function testconversation() {
-		console.log(conversation)
+
+	uploadstatus = "done"
+
+	// const directChat = async (query) => {
+	// 	const formData = new FormData();
+    // 	formData.append('value', query);
+	// 	const response = await fetch('?/chat', {
+	// 		method: 'POST',
+	// 		body: formData
+	// 	});
+	// };
+
+	async function directChat(query) {
+		const formData = new FormData();
+    	formData.append('value', query);
+		const response = await fetch('?/chat', {
+			method: 'POST',
+			body: formData
+		});
 	}
 
-	// uploadstatus = "done"
+	async function submit(query) {
+		let form = document.getElementById("form")
+        const data = new FormData(form);
+		if (query) {
+			data.append('value', query);
+		}
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: data
+        });
+    }
+
+	ocr = "test"
 
 </script>
 
@@ -187,11 +216,13 @@
 			class="form userinput"
 			transition:blur={{ delay: 250, duration: 300, easing: quintOut }}
 		>
+		<button on:click={() => submit("test")}></button>
 			<form
 				method="POST"
 				action="?/chat"
 				on:submit={startAnswerLoad}
 				use:enhance
+				id="form"
 				enctype="multipart/form-data"
 			>
 				{#if id}
