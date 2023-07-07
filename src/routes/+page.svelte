@@ -111,13 +111,13 @@
 	$: if (form?.answer !== undefined) {
 		stopLoad();
 		addChat(answer, userinput)
+		answer = form?.answer
 		console.log(conversation)
 	}
-
 	// $: addChat(answer, userinput)
 
 
-	uploadstatus = "done"
+	// uploadstatus = "done"
 
 	// const directChat = async (query) => {
 	// 	const formData = new FormData();
@@ -137,7 +137,22 @@
 		});
 	}
 
+	$:buttonstatus = form?.buttonstatus
+
+	$:if (form?.buttonstatus) {
+		buttonstatus = form?.buttonstatus
+	} else {
+		buttonstatus = "pending"
+	}
+
+
+	$: if (form?.error) {
+		console.log("error")
+		stopLoad()
+	}
+
 	async function submit(query) {
+		buttonstatus = "pending"
 		let form = document.getElementById("form")
         const data = new FormData(form);
 		if (query) {
@@ -146,14 +161,24 @@
         const response = await fetch(form.action, {
             method: 'POST',
             body: data
-        });
+        })
+		.then((response) => {
+			answer = answer
+		})
     }
 
-	ocr = "test"
 
 </script>
 
 <main>
+	<details>
+		<summary class="botsummary">Audio</summary>
+		test
+	</details>
+	<details>
+		<summary class="botsummary">Media</summary>
+		test
+	</details>
 	<section class="app upload" style={loaded == false ? 'display:none;' : ''}>
 		<FilePond
 			bind:this={pond}
@@ -201,11 +226,11 @@
 						</div>
 						<div class="bot">
 							{#if index === conversation.length - 1}
-								{chat.bot}
+								{@html converter.makeHtml(chat.bot)}
 							{:else}
 							<details>
 								<summary class="botsummary">{chat.bot.slice(0,10)+"..."}</summary>
-								{chat.bot}
+								{@html converter.makeHtml(chat.bot)}
 							</details>
 							{/if}
 						</div>
@@ -216,7 +241,13 @@
 			class="form userinput"
 			transition:blur={{ delay: 250, duration: 300, easing: quintOut }}
 		>
-		<button on:click={() => submit("test")}></button>
+		{#if buttonstatus !== "pending"}
+				{#if buttonstatus !== "pending" && answer !== undefined}
+					<button on:click={() => submit("resume")}>Resumilo</button>
+				{:else if buttonstatus === "pending" || answer === undefined}
+					<button>test</button>
+				{/if}
+		{/if}
 			<form
 				method="POST"
 				action="?/chat"
@@ -235,11 +266,6 @@
 				>
 			</form>
 		</section>
-		<!-- {#if answer}
-			<section transition:blur={{ delay: 250, duration: 300, easing: quintOut }}>
-				<div class="answer">{@html converter.makeHtml(answer)}</div>
-			</section>
-		{/if} -->
 	{/if}
 	{#if loading}
 		<section id="loading" transition:blur={{ delay: 250, duration: 300, easing: quintOut }}>

@@ -103,26 +103,33 @@ export const actions = {
         return { text: res, status: 'done' };
     },
     chat: async ({ request }) => {
+        const waitFor = delay => new Promise(resolve => setTimeout(resolve, delay));
         const data = await request.formData();
-        let res
-        if (data.get('value')) {
-            console.log("con value")
-            // res = sendQuery()
-            return { test: "con value" };
-        }
-        console.log("sin value")
-        console.log(data)
-        return "test"
         for (let field of data) {
         const [key, value] = field;
             data[key] = value;
         }
-        if (data.id) {
-            res = sendQuery(data.text, data.input, data.id)
-
+        let res
+        if (data.get('value')) {
+            console.log("con value")
+            console.log(data.get("value"))
+            if (data.get("value") === "resume") { // resumir
+                console.log("resume")
+                res = await sendQuery(data.text, "Quiero que lo resumas de una manera entendible y para que sea rapido de leer.", data.id)
+                    return { answer: res.text, test: "con value", buttonstatus: "done", userinput: "Resumilo"};
+            }
+            await waitFor(1000);
+            return {error: "No enviaste nada.", buttonstatus: "done"}
         }
-        res = sendQuery(data.text, data.input)
-        console.log(res)
-        return { answer: res.text, userinput: data.input, id: res.id  };
+        if (data.input !== undefined && data.input !== "") {
+            console.log("sin value")
+            if (data.id) {
+                res = await sendQuery(data.text, data.input, data.id)
+            }
+            res = await sendQuery(data.text, data.input)
+            console.log(await res)
+            return { answer: res.text, userinput: data.input, id: res.id, buttonstatus: "done"  };
+        }
+    return {error: "No enviaste nada.", buttonstatus: "done"}
     },
 };
